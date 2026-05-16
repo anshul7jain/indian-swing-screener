@@ -1,0 +1,35 @@
+name: Morning WhatsApp Signals
+
+on:
+  schedule:
+    # 02:30 UTC is 08:00 IST. Weekdays only.
+    - cron: "30 2 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send WhatsApp paper signals
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_FROM_WHATSAPP: ${{ secrets.TWILIO_FROM_WHATSAPP }}
+          WHATSAPP_TO_NUMBER: ${{ secrets.WHATSAPP_TO_NUMBER }}
+          DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
+          SCREENER_MIN_SCORE: ${{ vars.SCREENER_MIN_SCORE || '65' }}
+          SCREENER_MAX_SYMBOLS: ${{ vars.SCREENER_MAX_SYMBOLS || '' }}
+          NOTIFY_DRY_RUN: "false"
+        run: python -m src.notify_whatsapp
+

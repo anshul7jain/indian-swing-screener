@@ -1,0 +1,79 @@
+from __future__ import annotations
+
+import os
+from datetime import datetime
+
+from dotenv import load_dotenv
+
+from .config import APP_TIMEZONE, DEFAULT_MIN_SCORE, UNIVERSE_PATH
+from .data import load_universe
+from .screener import screen_universe
+
+
+def _today_label() -> str:
+    try:
+        from zoneinfo import ZoneInfo
+
+        now = datetime.now(ZoneInfo(APP_TIMEZONE))
+    except Exception:  # noqa: BLE001
+        now = datetime.now()
+    return now.strftime("%d %b %Y")
+
+
+def build_message(signals, dashboard_url: str = "", max_rows: int = 8) -> str:
+    title = f"Indian Swing Paper Signals - {_today_label()}"
+    if signals.empty:
+        lines = [title, "", "No candidates passed today's filters."]
+    else:
+        lines = [title, "", f"Top {min(max_rows, len(signals))} candidates:"]
+        for idx, row in signals.head(max_rows).iterrows():
+            lines.append(
+                f"{idx + 1}. {row.symbol} | {row.strategy} | score {row.score} | "
+                f"entry {row.entry} | stop {row.stop} | target {row.target}"
+            )
+        lines.append("")
+        lines.append("Paper signals only. Validate liquidity, news, and risk before acting.")
+
+    if dashboard_url:
+        lines.extend(["", f"Dashboard: {dashboard_url}"])
+    return "\n".join(lines)
+
+
+def send_whatsapp(message: str) -> str:
+    dry_run = os.getenv("NOTIFY_DRY_RUN", "false").lower() == "true"
+    sid = os.getenv("TWILIO_ACCOUNT_SID")
+    token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_FROM_WHATSAPP")
+    to_number = os.getenv("WHATSAPP_TO_NUMBER")
+
+    if dry_run or not all([sid, token, from_number, to_number]):
+        print(message)
+        return "dry-run"
+
+    from twilio.rest import Client
+
+    client = Client(sid, token)
+    sent = client.messages.create(from_=from_number, to=to_number, body=message)
+    return sent.sid
+
+
+def main() -> None:
+    load_dotenv()
+    min_score = float(os.getenv("SCREENER_MIN_SCORE", DEFAULT_MIN_SCORE))
+    max_symbols_raw = os.getenv("SCREENER_MAX_SYMBOLS", "").strip()
+    max_symbols = int(max_symbols_raw) if max_symbols_raw else None
+    dashboard_url = os.getenv("DASHBOARD_URL", "").strip()
+
+    universe = load_universe(UNIVERSE_PATH)
+    signals, _, failures = screen_universe(universe, min_score=min_score, max_symbols=max_symbols)
+    if failures:
+        print(f"Skipped {len(failures)} symbols. First few: {failures[:5]}")
+
+    message = build_message(signals, dashboard_url=dashboard_url)
+    result = send_whatsapp(message)
+    print(f"WhatsApp notification result: {result}")
+
+
+if __name__ == "__main__":
+    main()
+

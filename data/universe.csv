@@ -1,0 +1,96 @@
+symbol,name,sector
+RELIANCE,Reliance Industries,Energy
+ONGC,Oil and Natural Gas Corporation,Energy
+COALINDIA,Coal India,Energy
+BPCL,Bharat Petroleum,Energy
+IOC,Indian Oil Corporation,Energy
+POWERGRID,Power Grid Corporation,Utilities
+NTPC,NTPC,Utilities
+TATAPOWER,Tata Power,Utilities
+ADANIGREEN,Adani Green Energy,Utilities
+TCS,Tata Consultancy Services,Information Technology
+INFY,Infosys,Information Technology
+HCLTECH,HCL Technologies,Information Technology
+WIPRO,Wipro,Information Technology
+TECHM,Tech Mahindra,Information Technology
+LTIM,LTIMindtree,Information Technology
+PERSISTENT,Persistent Systems,Information Technology
+HDFCBANK,HDFC Bank,Financial Services
+ICICIBANK,ICICI Bank,Financial Services
+SBIN,State Bank of India,Financial Services
+KOTAKBANK,Kotak Mahindra Bank,Financial Services
+AXISBANK,Axis Bank,Financial Services
+BANKBARODA,Bank of Baroda,Financial Services
+CANBK,Canara Bank,Financial Services
+PNB,Punjab National Bank,Financial Services
+FEDERALBNK,Federal Bank,Financial Services
+IDFCFIRSTB,IDFC First Bank,Financial Services
+BAJFINANCE,Bajaj Finance,Financial Services
+BAJAJFINSV,Bajaj Finserv,Financial Services
+CHOLAFIN,Cholamandalam Investment,Financial Services
+MUTHOOTFIN,Muthoot Finance,Financial Services
+PFC,Power Finance Corporation,Financial Services
+RECLTD,REC,Financial Services
+HDFCLIFE,HDFC Life Insurance,Financial Services
+SBILIFE,SBI Life Insurance,Financial Services
+ICICIPRULI,ICICI Prudential Life,Financial Services
+ITC,ITC,Consumer Staples
+HINDUNILVR,Hindustan Unilever,Consumer Staples
+NESTLEIND,Nestle India,Consumer Staples
+BRITANNIA,Britannia Industries,Consumer Staples
+TATACONSUM,Tata Consumer Products,Consumer Staples
+DABUR,Dabur India,Consumer Staples
+MARICO,Marico,Consumer Staples
+DMART,Avenue Supermarts,Consumer Discretionary
+TRENT,Trent,Consumer Discretionary
+TITAN,Titan Company,Consumer Discretionary
+ZOMATO,Zomato,Consumer Discretionary
+NYKAA,FSN E-Commerce Ventures,Consumer Discretionary
+PAYTM,One 97 Communications,Consumer Discretionary
+IRCTC,Indian Railway Catering and Tourism,Consumer Discretionary
+INDIGO,InterGlobe Aviation,Consumer Discretionary
+MARUTI,Maruti Suzuki,Automobile
+TATAMOTORS,Tata Motors,Automobile
+M&M,Mahindra and Mahindra,Automobile
+EICHERMOT,Eicher Motors,Automobile
+HEROMOTOCO,Hero MotoCorp,Automobile
+BAJAJ-AUTO,Bajaj Auto,Automobile
+TVSMOTOR,TVS Motor,Automobile
+ASHOKLEY,Ashok Leyland,Automobile
+SUNPHARMA,Sun Pharmaceutical,Healthcare
+CIPLA,Cipla,Healthcare
+DRREDDY,Dr Reddy's Laboratories,Healthcare
+DIVISLAB,Divi's Laboratories,Healthcare
+APOLLOHOSP,Apollo Hospitals,Healthcare
+LUPIN,Lupin,Healthcare
+AUROPHARMA,Aurobindo Pharma,Healthcare
+BIOCON,Biocon,Healthcare
+TATASTEEL,Tata Steel,Metals
+JSWSTEEL,JSW Steel,Metals
+HINDALCO,Hindalco Industries,Metals
+VEDL,Vedanta,Metals
+JINDALSTEL,Jindal Steel and Power,Metals
+NATIONALUM,National Aluminium,Metals
+LT,Larsen and Toubro,Industrials
+SIEMENS,Siemens,Industrials
+ABB,ABB India,Industrials
+HAL,Hindustan Aeronautics,Industrials
+BEL,Bharat Electronics,Industrials
+BHEL,Bharat Heavy Electricals,Industrials
+RVNL,Rail Vikas Nigam,Industrials
+POLYCAB,Polycab India,Industrials
+HAVELLS,Havells India,Industrials
+ULTRACEMCO,UltraTech Cement,Materials
+GRASIM,Grasim Industries,Materials
+SHREECEM,Shree Cement,Materials
+AMBUJACEM,Ambuja Cements,Materials
+PIDILITIND,Pidilite Industries,Materials
+ASIANPAINT,Asian Paints,Materials
+BERGEPAINT,Berger Paints,Materials
+DLF,DLF,Real Estate
+GODREJPROP,Godrej Properties,Real Estate
+OBEROIRLTY,Oberoi Realty,Real Estate
+PHOENIXLTD,Phoenix Mills,Real Estate
+BHARTIARTL,Bharti Airtel,Telecom
+INDUSTOWER,Indus Towers,Telecom
+NAUKRI,Info Edge,Internet

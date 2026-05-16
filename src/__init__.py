@@ -1,0 +1,2 @@
+"""Indian swing screener package."""
+
