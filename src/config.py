@@ -5,8 +5,8 @@ from pathlib import Path
 APP_NAME = "Indian Swing Screener"
 APP_TIMEZONE = "Asia/Kolkata"
 DEFAULT_PERIOD = "18mo"
-DEFAULT_MIN_SCORE = 65
-DEFAULT_MAX_SYMBOLS = 80
+DEFAULT_MIN_SCORE = 80
+DEFAULT_MAX_SYMBOLS = 200
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
