@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import os
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
 from src.config import APP_NAME, DEFAULT_MAX_SYMBOLS, DEFAULT_MIN_SCORE, DEFAULT_PERIOD, UNIVERSE_PATH
 from src.data import load_universe
+from src.notify_whatsapp import build_message, send_whatsapp
 from src.screener import screen_universe
 
 st.set_page_config(page_title=APP_NAME, layout="wide")
@@ -47,6 +50,29 @@ def render_chart(symbol: str, history: pd.DataFrame) -> None:
     st.plotly_chart(fig, use_container_width=True)
 
 
+def apply_streamlit_secrets_to_env() -> None:
+    for key in [
+        "TWILIO_ACCOUNT_SID",
+        "TWILIO_AUTH_TOKEN",
+        "TWILIO_FROM_WHATSAPP",
+        "WHATSAPP_TO_NUMBER",
+        "TWILIO_CONTENT_SID",
+        "DASHBOARD_URL",
+    ]:
+        try:
+            value = st.secrets.get(key)
+        except Exception:  # noqa: BLE001 - secrets are absent in local dev until configured.
+            value = None
+
+        if value and not os.getenv(key):
+            os.environ[key] = str(value)
+
+
+def missing_whatsapp_settings() -> list[str]:
+    required = ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_WHATSAPP", "WHATSAPP_TO_NUMBER"]
+    return [key for key in required if not os.getenv(key)]
+
+
 st.title(APP_NAME)
 st.caption("Daily NSE swing-trading screener with paper-only signals. No broker connection, no order placement.")
 
@@ -59,12 +85,25 @@ with st.sidebar:
     run_scan = st.button("Run scan", type="primary", use_container_width=True)
     st.divider()
     st.caption("Edit data/universe.csv to add/remove NSE symbols.")
+    st.divider()
+    st.header("WhatsApp")
+    send_test_whatsapp = st.button("Send test WhatsApp", use_container_width=True)
 
 if run_scan:
     st.cache_data.clear()
 
 with st.spinner("Scanning NSE symbols from Yahoo Finance..."):
     signals, histories, failures = cached_screen(period, min_score, None if scan_all else int(max_symbols))
+
+if send_test_whatsapp:
+    apply_streamlit_secrets_to_env()
+    missing = missing_whatsapp_settings()
+    if missing:
+        st.sidebar.error(f"Missing WhatsApp settings: {', '.join(missing)}")
+    else:
+        message = build_message(signals, dashboard_url=os.getenv("DASHBOARD_URL", ""))
+        result = send_whatsapp(message)
+        st.sidebar.success(f"WhatsApp test sent: {result}")
 
 if signals.empty:
     st.warning("No paper signals passed the current filters. Try lowering the score or scanning more symbols.")

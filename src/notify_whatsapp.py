@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime
 
@@ -45,6 +46,7 @@ def send_whatsapp(message: str) -> str:
     token = os.getenv("TWILIO_AUTH_TOKEN")
     from_number = os.getenv("TWILIO_FROM_WHATSAPP")
     to_number = os.getenv("WHATSAPP_TO_NUMBER")
+    content_sid = os.getenv("TWILIO_CONTENT_SID")
 
     if dry_run or not all([sid, token, from_number, to_number]):
         print(message)
@@ -53,7 +55,15 @@ def send_whatsapp(message: str) -> str:
     from twilio.rest import Client
 
     client = Client(sid, token)
-    sent = client.messages.create(from_=from_number, to=to_number, body=message)
+    if content_sid:
+        sent = client.messages.create(
+            from_=from_number,
+            to=to_number,
+            content_sid=content_sid,
+            content_variables=json.dumps({"1": message[:1500]}),
+        )
+    else:
+        sent = client.messages.create(from_=from_number, to=to_number, body=message)
     return sent.sid
 
 
@@ -76,4 +86,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
