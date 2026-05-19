@@ -40,13 +40,19 @@ def build_message(signals, dashboard_url: str = "", max_rows: int = 8) -> str:
     return "\n".join(lines)
 
 
+def parse_recipients(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    return [recipient.strip() for recipient in raw.split(",") if recipient.strip()]
+
+
 def send_whatsapp(message: str) -> str:
     dry_run = os.getenv("NOTIFY_DRY_RUN", "false").lower() == "true"
     require_config = os.getenv("REQUIRE_WHATSAPP_CONFIG", "false").lower() == "true"
     sid = os.getenv("TWILIO_ACCOUNT_SID")
     token = os.getenv("TWILIO_AUTH_TOKEN")
     from_number = os.getenv("TWILIO_FROM_WHATSAPP")
-    to_number = os.getenv("WHATSAPP_TO_NUMBER")
+    to_numbers = parse_recipients(os.getenv("WHATSAPP_TO_NUMBER"))
     content_sid = os.getenv("TWILIO_CONTENT_SID")
     missing = [
         name
@@ -54,7 +60,7 @@ def send_whatsapp(message: str) -> str:
             "TWILIO_ACCOUNT_SID": sid,
             "TWILIO_AUTH_TOKEN": token,
             "TWILIO_FROM_WHATSAPP": from_number,
-            "WHATSAPP_TO_NUMBER": to_number,
+            "WHATSAPP_TO_NUMBER": ",".join(to_numbers),
         }.items()
         if not value
     ]
@@ -72,16 +78,19 @@ def send_whatsapp(message: str) -> str:
     from twilio.rest import Client
 
     client = Client(sid, token)
-    if content_sid:
-        sent = client.messages.create(
-            from_=from_number,
-            to=to_number,
-            content_sid=content_sid,
-            content_variables=json.dumps({"1": message[:1500]}),
-        )
-    else:
-        sent = client.messages.create(from_=from_number, to=to_number, body=message)
-    return sent.sid
+    sent_ids = []
+    for to_number in to_numbers:
+        if content_sid:
+            sent = client.messages.create(
+                from_=from_number,
+                to=to_number,
+                content_sid=content_sid,
+                content_variables=json.dumps({"1": message[:1500]}),
+            )
+        else:
+            sent = client.messages.create(from_=from_number, to=to_number, body=message)
+        sent_ids.append(sent.sid)
+    return ",".join(sent_ids)
 
 
 def main() -> None:

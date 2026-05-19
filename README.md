@@ -61,6 +61,12 @@ WHATSAPP_TO_NUMBER = "whatsapp:+91XXXXXXXXXX"
 DASHBOARD_URL = "https://your-app-name.streamlit.app"
 ```
 
+For multiple recipients, put all numbers in `WHATSAPP_TO_NUMBER`, separated by commas:
+
+```toml
+WHATSAPP_TO_NUMBER = "whatsapp:+91XXXXXXXXXX,whatsapp:+91YYYYYYYYYY,whatsapp:+91ZZZZZZZZZZ"
+```
+
 Then redeploy/reboot the app and click **Send test WhatsApp** in the sidebar.
 
 ### 3. Add GitHub Secrets For 8 AM Notification
@@ -76,7 +82,7 @@ Create these GitHub repository secrets:
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_FROM_WHATSAPP`, for example `whatsapp:+14155238886` for Twilio sandbox
-- `WHATSAPP_TO_NUMBER`, for example `whatsapp:+91XXXXXXXXXX`
+- `WHATSAPP_TO_NUMBER`, for example `whatsapp:+91XXXXXXXXXX,whatsapp:+91YYYYYYYYYY`
 - `DASHBOARD_URL`, your Streamlit app URL
 - `TWILIO_CONTENT_SID`, optional for production template messages
 
