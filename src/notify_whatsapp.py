@@ -42,13 +42,30 @@ def build_message(signals, dashboard_url: str = "", max_rows: int = 8) -> str:
 
 def send_whatsapp(message: str) -> str:
     dry_run = os.getenv("NOTIFY_DRY_RUN", "false").lower() == "true"
+    require_config = os.getenv("REQUIRE_WHATSAPP_CONFIG", "false").lower() == "true"
     sid = os.getenv("TWILIO_ACCOUNT_SID")
     token = os.getenv("TWILIO_AUTH_TOKEN")
     from_number = os.getenv("TWILIO_FROM_WHATSAPP")
     to_number = os.getenv("WHATSAPP_TO_NUMBER")
     content_sid = os.getenv("TWILIO_CONTENT_SID")
+    missing = [
+        name
+        for name, value in {
+            "TWILIO_ACCOUNT_SID": sid,
+            "TWILIO_AUTH_TOKEN": token,
+            "TWILIO_FROM_WHATSAPP": from_number,
+            "WHATSAPP_TO_NUMBER": to_number,
+        }.items()
+        if not value
+    ]
 
-    if dry_run or not all([sid, token, from_number, to_number]):
+    if dry_run:
+        print(message)
+        return "dry-run"
+
+    if missing:
+        if require_config:
+            raise RuntimeError(f"Missing WhatsApp environment variables: {', '.join(missing)}")
         print(message)
         return "dry-run"
 

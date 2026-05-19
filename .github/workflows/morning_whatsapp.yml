@@ -32,4 +32,5 @@ jobs:
           SCREENER_MIN_SCORE: ${{ vars.SCREENER_MIN_SCORE || '65' }}
           SCREENER_MAX_SYMBOLS: ${{ vars.SCREENER_MAX_SYMBOLS || '' }}
           NOTIFY_DRY_RUN: "false"
+          REQUIRE_WHATSAPP_CONFIG: "true"
         run: python -m src.notify_whatsapp
