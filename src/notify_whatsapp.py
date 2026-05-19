@@ -46,6 +46,12 @@ def parse_recipients(raw: str | None) -> list[str]:
     return [recipient.strip() for recipient in raw.split(",") if recipient.strip()]
 
 
+def mask_recipient(recipient: str) -> str:
+    if len(recipient) <= 6:
+        return "***"
+    return f"{recipient[:10]}...{recipient[-4:]}"
+
+
 def send_whatsapp(message: str) -> str:
     dry_run = os.getenv("NOTIFY_DRY_RUN", "false").lower() == "true"
     require_config = os.getenv("REQUIRE_WHATSAPP_CONFIG", "false").lower() == "true"
@@ -66,12 +72,14 @@ def send_whatsapp(message: str) -> str:
     ]
 
     if dry_run:
+        print(f"WhatsApp dry run for {len(to_numbers)} recipient(s): {[mask_recipient(n) for n in to_numbers]}")
         print(message)
         return "dry-run"
 
     if missing:
         if require_config:
             raise RuntimeError(f"Missing WhatsApp environment variables: {', '.join(missing)}")
+        print(f"WhatsApp config missing ({', '.join(missing)}); falling back to dry-run.")
         print(message)
         return "dry-run"
 
@@ -79,17 +87,26 @@ def send_whatsapp(message: str) -> str:
 
     client = Client(sid, token)
     sent_ids = []
+    failures = []
+    print(f"Sending WhatsApp message to {len(to_numbers)} recipient(s): {[mask_recipient(n) for n in to_numbers]}")
     for to_number in to_numbers:
-        if content_sid:
-            sent = client.messages.create(
-                from_=from_number,
-                to=to_number,
-                content_sid=content_sid,
-                content_variables=json.dumps({"1": message[:1500]}),
-            )
-        else:
-            sent = client.messages.create(from_=from_number, to=to_number, body=message)
-        sent_ids.append(sent.sid)
+        try:
+            if content_sid:
+                sent = client.messages.create(
+                    from_=from_number,
+                    to=to_number,
+                    content_sid=content_sid,
+                    content_variables=json.dumps({"1": message[:1500]}),
+                )
+            else:
+                sent = client.messages.create(from_=from_number, to=to_number, body=message)
+            print(f"Sent to {mask_recipient(to_number)} with SID {sent.sid}")
+            sent_ids.append(sent.sid)
+        except Exception as exc:  # noqa: BLE001 - keep all recipient failures visible.
+            failures.append(f"{mask_recipient(to_number)}: {exc}")
+
+    if failures:
+        raise RuntimeError("WhatsApp send failed for recipient(s): " + " | ".join(failures))
     return ",".join(sent_ids)
 
 

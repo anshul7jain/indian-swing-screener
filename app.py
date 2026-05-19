@@ -102,8 +102,14 @@ if send_test_whatsapp:
         st.sidebar.error(f"Missing WhatsApp settings: {', '.join(missing)}")
     else:
         message = build_message(signals, dashboard_url=os.getenv("DASHBOARD_URL", ""))
-        result = send_whatsapp(message)
-        st.sidebar.success(f"WhatsApp test sent: {result}")
+        try:
+            result = send_whatsapp(message)
+            if result == "dry-run":
+                st.sidebar.warning("WhatsApp ran in dry-run mode. Check secrets and NOTIFY_DRY_RUN.")
+            else:
+                st.sidebar.success(f"WhatsApp API accepted message(s): {result}")
+        except Exception as exc:  # noqa: BLE001 - surface Twilio's actionable message in the app.
+            st.sidebar.error(f"WhatsApp send failed: {exc}")
 
 if signals.empty:
     st.warning("No paper signals passed the current filters. Try lowering the score or scanning more symbols.")
