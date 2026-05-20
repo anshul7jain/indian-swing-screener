@@ -4,6 +4,8 @@ on:
   schedule:
     # 02:30 UTC is 08:00 IST. Weekdays only.
     - cron: "30 2 * * 1-5"
+    # Fallback for observed GitHub schedule drift: 22:30 UTC + ~4h delay ~= 08:00 IST.
+    - cron: "30 22 * * 0-4"
   workflow_dispatch:
 
 jobs:
@@ -33,4 +35,5 @@ jobs:
           SCREENER_MAX_SYMBOLS: ${{ vars.SCREENER_MAX_SYMBOLS || '' }}
           NOTIFY_DRY_RUN: "false"
           REQUIRE_WHATSAPP_CONFIG: "true"
+          ENFORCE_SEND_WINDOW: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
         run: python -m src.notify_whatsapp

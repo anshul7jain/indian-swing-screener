@@ -77,6 +77,8 @@ Streamlit Cloud is not a reliable cron runner, so the repo includes a GitHub Act
 
 It runs at **02:30 UTC / 08:00 IST**, Monday to Friday.
 
+Because GitHub scheduled workflows are best-effort and may drift, the workflow also has a fallback schedule and the Python job only sends scheduled messages during the **07:30-08:45 IST** window. Manual **Run workflow** executions are not blocked by this window.
+
 Create these GitHub repository secrets:
 
 - `TWILIO_ACCOUNT_SID`

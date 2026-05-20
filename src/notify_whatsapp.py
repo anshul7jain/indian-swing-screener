@@ -10,6 +10,9 @@ from .config import APP_TIMEZONE, DEFAULT_MIN_SCORE, UNIVERSE_PATH
 from .data import load_universe
 from .screener import screen_universe
 
+SEND_WINDOW_START = (7, 30)
+SEND_WINDOW_END = (8, 45)
+
 
 def _today_label() -> str:
     try:
@@ -19,6 +22,23 @@ def _today_label() -> str:
     except Exception:  # noqa: BLE001
         now = datetime.now()
     return now.strftime("%d %b %Y")
+
+
+def _now_ist() -> datetime:
+    try:
+        from zoneinfo import ZoneInfo
+
+        return datetime.now(ZoneInfo(APP_TIMEZONE))
+    except Exception:  # noqa: BLE001
+        return datetime.now()
+
+
+def inside_send_window(now: datetime | None = None) -> bool:
+    now = now or _now_ist()
+    current_minutes = now.hour * 60 + now.minute
+    start_minutes = SEND_WINDOW_START[0] * 60 + SEND_WINDOW_START[1]
+    end_minutes = SEND_WINDOW_END[0] * 60 + SEND_WINDOW_END[1]
+    return start_minutes <= current_minutes <= end_minutes
 
 
 def build_message(signals, dashboard_url: str = "", max_rows: int = 8) -> str:
@@ -112,6 +132,12 @@ def send_whatsapp(message: str) -> str:
 
 def main() -> None:
     load_dotenv()
+    enforce_send_window = os.getenv("ENFORCE_SEND_WINDOW", "false").lower() == "true"
+    if enforce_send_window and not inside_send_window():
+        now = _now_ist().strftime("%d %b %Y %H:%M %Z")
+        print(f"Skipping scheduled WhatsApp send outside 07:30-08:45 IST window. Current time: {now}")
+        return
+
     min_score = float(os.getenv("SCREENER_MIN_SCORE", DEFAULT_MIN_SCORE))
     max_symbols_raw = os.getenv("SCREENER_MAX_SYMBOLS", "").strip()
     max_symbols = int(max_symbols_raw) if max_symbols_raw else None
