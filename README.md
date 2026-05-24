@@ -21,6 +21,19 @@ streamlit run app.py
 
 Edit `data/universe.csv` to change the stock universe.
 
+## Backtest
+
+The dashboard includes a historical backtest panel. It replays the same screener rules from a selected start date, such as `2024-01-01`, using Yahoo Finance daily candles.
+
+Backtest assumptions:
+
+- Signals are generated from the daily close.
+- Entries are simulated at the next trading session's open.
+- Exits happen at the planned stop, 2R target, or the selected max holding period.
+- If stop and target are both touched on the same candle, the backtest assumes the stop was hit first.
+- Only one paper trade per symbol can be active at a time.
+- Brokerage, taxes, slippage, liquidity filters, and position sizing limits are not included yet.
+
 ## Deploy Dashboard To Streamlit Cloud
 
 1. Push this folder to a GitHub repository.

@@ -44,3 +44,26 @@ def fetch_history(yahoo_symbol: str, period: str = "18mo") -> pd.DataFrame:
     df.index = pd.to_datetime(df.index)
     return df
 
+
+def fetch_history_range(yahoo_symbol: str, start: str, end: str | None = None) -> pd.DataFrame:
+    df = yf.download(
+        yahoo_symbol,
+        start=start,
+        end=end,
+        interval="1d",
+        auto_adjust=False,
+        progress=False,
+        threads=False,
+    )
+
+    if df.empty:
+        return df
+
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [col[0] for col in df.columns]
+
+    expected = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    available = [col for col in expected if col in df.columns]
+    df = df[available].dropna(subset=["Open", "High", "Low", "Close"])
+    df.index = pd.to_datetime(df.index)
+    return df

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+from datetime import date
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.backtest import BacktestConfig, run_backtest
 from src.config import APP_NAME, DEFAULT_MAX_SYMBOLS, DEFAULT_MIN_SCORE, DEFAULT_PERIOD, UNIVERSE_PATH
 from src.data import load_universe
 from src.notify_whatsapp import build_message, send_whatsapp
@@ -23,6 +25,25 @@ def cached_universe() -> pd.DataFrame:
 def cached_screen(period: str, min_score: int, max_symbols: int | None):
     universe = cached_universe()
     return screen_universe(universe, period=period, min_score=min_score, max_symbols=max_symbols)
+
+
+@st.cache_data(ttl=6 * 60 * 60)
+def cached_backtest(
+    start_date: str,
+    min_score: int,
+    max_symbols: int | None,
+    max_holding_days: int,
+    risk_per_trade_pct: float,
+):
+    universe = cached_universe()
+    config = BacktestConfig(
+        start_date=start_date,
+        min_score=min_score,
+        max_symbols=max_symbols,
+        max_holding_days=max_holding_days,
+        risk_per_trade_pct=risk_per_trade_pct,
+    )
+    return run_backtest(universe, config)
 
 
 def render_chart(symbol: str, history: pd.DataFrame) -> None:
@@ -47,7 +68,7 @@ def render_chart(symbol: str, history: pd.DataFrame) -> None:
         xaxis_rangeslider_visible=False,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def apply_streamlit_secrets_to_env() -> None:
@@ -82,12 +103,12 @@ with st.sidebar:
     min_score = st.slider("Minimum signal score", 50, 90, DEFAULT_MIN_SCORE, 1)
     scan_all = st.checkbox("Scan full universe", value=False)
     max_symbols = None if scan_all else st.number_input("Max symbols", 20, 200, DEFAULT_MAX_SYMBOLS, 10)
-    run_scan = st.button("Run scan", type="primary", use_container_width=True)
+    run_scan = st.button("Run scan", type="primary", width="stretch")
     st.divider()
     st.caption("Edit data/universe.csv to add/remove NSE symbols.")
     st.divider()
     st.header("WhatsApp")
-    send_test_whatsapp = st.button("Send test WhatsApp", use_container_width=True)
+    send_test_whatsapp = st.button("Send test WhatsApp", width="stretch")
 
 if run_scan:
     st.cache_data.clear()
@@ -154,7 +175,7 @@ else:
     st.dataframe(
         filtered[display_columns],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "score": st.column_config.NumberColumn("Score", format="%.1f"),
             "risk_pct": st.column_config.NumberColumn("Risk %", format="%.2f%%"),
@@ -185,3 +206,95 @@ st.info(
     "This dashboard is for education and paper tracking only. Signals are generated from end-of-day data and "
     "should be checked manually for liquidity, news, earnings, and personal risk limits."
 )
+
+st.divider()
+st.header("Backtest")
+st.caption(
+    "Replays the same signal rules historically. Signals are generated on close, entered at the next session open, "
+    "and exited at stop, 2R target, or max holding period."
+)
+
+backtest_col1, backtest_col2, backtest_col3, backtest_col4 = st.columns(4)
+backtest_start = backtest_col1.date_input("Start date", value=date(2024, 1, 1))
+backtest_min_score = backtest_col2.slider("Backtest min score", 50, 90, DEFAULT_MIN_SCORE, 1)
+backtest_max_symbols = backtest_col3.number_input("Backtest max symbols", 5, 100, 30, 5)
+backtest_max_hold = backtest_col4.number_input("Max holding days", 5, 90, 30, 5)
+risk_per_trade_pct = st.slider("Risk per trade used for equity curve", 0.25, 3.0, 1.0, 0.25)
+run_backtest_clicked = st.button("Run backtest from selected date", type="primary")
+
+if run_backtest_clicked:
+    with st.spinner("Running historical replay. This can take a minute while Yahoo Finance data downloads..."):
+        trades, equity, metrics, backtest_failures = cached_backtest(
+            backtest_start.isoformat(),
+            backtest_min_score,
+            int(backtest_max_symbols),
+            int(backtest_max_hold),
+            float(risk_per_trade_pct),
+        )
+
+    if trades.empty:
+        st.warning("No historical trades matched the selected backtest settings.")
+    else:
+        metric_col1, metric_col2, metric_col3, metric_col4, metric_col5 = st.columns(5)
+        metric_col1.metric("Trades", f"{int(metrics['trades'])}")
+        metric_col2.metric("Win rate", f"{metrics['win_rate_pct']:.1f}%")
+        metric_col3.metric("Avg R", f"{metrics['avg_r']:.2f}")
+        metric_col4.metric("Total R", f"{metrics['total_r']:.2f}")
+        metric_col5.metric("Profit factor", f"{metrics['profit_factor']:.2f}")
+
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scatter(
+                x=equity["exit_date"],
+                y=equity["equity_pct"],
+                mode="lines",
+                name="Equity %",
+            )
+        )
+        fig.update_layout(
+            height=420,
+            margin=dict(l=10, r=10, t=30, b=10),
+            yaxis_title="Cumulative return at selected risk/trade (%)",
+        )
+        st.plotly_chart(fig, width="stretch")
+
+        st.subheader("Backtest Trade Log")
+        display_backtest_columns = [
+            "signal_date",
+            "entry_date",
+            "exit_date",
+            "symbol",
+            "strategy",
+            "score",
+            "entry",
+            "planned_stop",
+            "planned_target",
+            "exit",
+            "exit_reason",
+            "return_pct",
+            "r_multiple",
+            "holding_days",
+        ]
+        st.dataframe(
+            trades[display_backtest_columns],
+            hide_index=True,
+            width="stretch",
+            column_config={
+                "return_pct": st.column_config.NumberColumn("Return %", format="%.2f%%"),
+                "r_multiple": st.column_config.NumberColumn("R", format="%.2f"),
+            },
+        )
+        st.download_button(
+            "Download backtest trades CSV",
+            data=trades.to_csv(index=False),
+            file_name="backtest_trades.csv",
+            mime="text/csv",
+        )
+
+    with st.expander("Backtest skipped symbols / data issues"):
+        if backtest_failures:
+            st.write("\n".join(backtest_failures[:120]))
+        else:
+            st.write("No data issues in this backtest.")
+else:
+    st.write("Choose backtest settings and run the historical replay when you are ready.")
