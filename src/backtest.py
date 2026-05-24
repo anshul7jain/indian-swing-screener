@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 import pandas as pd
+import yfinance as yf
 
-from .data import fetch_history_range
 from .indicators import add_indicators
 from .screener import _sector_scores
 from .strategies import evaluate_strategies
@@ -25,6 +25,30 @@ def _download_start(start_date: str) -> str:
     return start.isoformat()
 
 
+def _fetch_history_range(yahoo_symbol: str, start: str, end: str | None = None) -> pd.DataFrame:
+    df = yf.download(
+        yahoo_symbol,
+        start=start,
+        end=end,
+        interval="1d",
+        auto_adjust=False,
+        progress=False,
+        threads=False,
+    )
+
+    if df.empty:
+        return df
+
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [col[0] for col in df.columns]
+
+    expected = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    available = [col for col in expected if col in df.columns]
+    df = df[available].dropna(subset=["Open", "High", "Low", "Close"])
+    df.index = pd.to_datetime(df.index)
+    return df
+
+
 def _prepare_histories(
     universe: pd.DataFrame,
     config: BacktestConfig,
@@ -35,7 +59,7 @@ def _prepare_histories(
 
     for stock in sample.itertuples(index=False):
         try:
-            history = fetch_history_range(stock.yahoo_symbol, _download_start(config.start_date))
+            history = _fetch_history_range(stock.yahoo_symbol, _download_start(config.start_date))
             if history.empty or len(history) < 230:
                 failures.append(f"{stock.symbol}: not enough price history")
                 continue
