@@ -102,6 +102,7 @@ def _simulate_exit(
     stop: float,
     target: float,
     max_holding_days: int,
+    direction: str = "long",
 ) -> dict[str, object] | None:
     future = history.loc[history.index > signal_date].head(max_holding_days)
     if future.empty:
@@ -109,34 +110,62 @@ def _simulate_exit(
 
     entry_date = future.index[0]
     entry = float(future.iloc[0]["Open"]) if pd.notna(future.iloc[0]["Open"]) else entry
-    if entry <= stop:
-        return {
-            "entry_date": entry_date.date().isoformat(),
-            "exit_date": entry_date.date().isoformat(),
-            "entry": round(entry, 2),
-            "exit": round(entry, 2),
-            "exit_reason": "gap_below_stop",
-            "holding_days": 0,
-            "return_pct": 0.0,
-        }
-    if entry >= target:
-        return {
-            "entry_date": entry_date.date().isoformat(),
-            "exit_date": entry_date.date().isoformat(),
-            "entry": round(entry, 2),
-            "exit": round(entry, 2),
-            "exit_reason": "gap_above_target",
-            "holding_days": 0,
-            "return_pct": 0.0,
-        }
+
+    if direction == "long":
+        if entry <= stop:
+            return {
+                "entry_date": entry_date.date().isoformat(),
+                "exit_date": entry_date.date().isoformat(),
+                "entry": round(entry, 2),
+                "exit": round(entry, 2),
+                "exit_reason": "gap_past_stop",
+                "holding_days": 0,
+                "return_pct": 0.0,
+            }
+        if entry >= target:
+            return {
+                "entry_date": entry_date.date().isoformat(),
+                "exit_date": entry_date.date().isoformat(),
+                "entry": round(entry, 2),
+                "exit": round(entry, 2),
+                "exit_reason": "gap_past_target",
+                "holding_days": 0,
+                "return_pct": 0.0,
+            }
+    else:
+        if entry >= stop:
+            return {
+                "entry_date": entry_date.date().isoformat(),
+                "exit_date": entry_date.date().isoformat(),
+                "entry": round(entry, 2),
+                "exit": round(entry, 2),
+                "exit_reason": "gap_past_stop",
+                "holding_days": 0,
+                "return_pct": 0.0,
+            }
+        if entry <= target:
+            return {
+                "entry_date": entry_date.date().isoformat(),
+                "exit_date": entry_date.date().isoformat(),
+                "entry": round(entry, 2),
+                "exit": round(entry, 2),
+                "exit_reason": "gap_past_target",
+                "holding_days": 0,
+                "return_pct": 0.0,
+            }
 
     for day, row in future.iterrows():
         low = float(row["Low"])
         high = float(row["High"])
         close = float(row["Close"])
 
-        hit_stop = low <= stop
-        hit_target = high >= target
+        if direction == "long":
+            hit_stop = low <= stop
+            hit_target = high >= target
+        else:
+            hit_stop = high >= stop
+            hit_target = low <= target
+
         if hit_stop and hit_target:
             exit_price = stop
             exit_reason = "stop_and_target_same_day"
@@ -149,6 +178,8 @@ def _simulate_exit(
         else:
             continue
 
+        return_pct = ((exit_price / entry) - 1) * 100 if direction == "long" else ((entry / exit_price) - 1) * 100
+
         return {
             "entry_date": entry_date.date().isoformat(),
             "exit_date": day.date().isoformat(),
@@ -156,11 +187,13 @@ def _simulate_exit(
             "exit": round(exit_price, 2),
             "exit_reason": exit_reason,
             "holding_days": int((day - entry_date).days),
-            "return_pct": round(((exit_price / entry) - 1) * 100, 2),
+            "return_pct": round(return_pct, 2),
         }
 
     last_day = future.index[-1]
     last_close = float(future.iloc[-1]["Close"])
+    return_pct = ((last_close / entry) - 1) * 100 if direction == "long" else ((entry / last_close) - 1) * 100
+
     return {
         "entry_date": entry_date.date().isoformat(),
         "exit_date": last_day.date().isoformat(),
@@ -168,7 +201,7 @@ def _simulate_exit(
         "exit": round(last_close, 2),
         "exit_reason": "time_exit",
         "holding_days": int((last_day - entry_date).days),
-        "return_pct": round(((last_close / entry) - 1) * 100, 2),
+        "return_pct": round(return_pct, 2),
     }
 
 
@@ -204,6 +237,7 @@ def run_backtest(
                         "name": row["name"],
                         "sector": row["sector"],
                         "strategy": signal.strategy,
+                        "direction": signal.direction,
                         "score": signal.score,
                         "signal_date": run_date.date().isoformat(),
                         "planned_entry": signal.entry,
@@ -225,12 +259,22 @@ def run_backtest(
                 float(candidate["planned_stop"]),
                 float(candidate["planned_target"]),
                 config.max_holding_days,
+                str(candidate["direction"]),
             )
             if exit_plan is None:
                 continue
             active_until[symbol] = pd.Timestamp(str(exit_plan["exit_date"]))
-            risk = max(float(exit_plan["entry"]) - float(candidate["planned_stop"]), 0.01)
-            r_multiple = (float(exit_plan["exit"]) - float(exit_plan["entry"])) / risk
+
+            entry_p = float(exit_plan["entry"])
+            exit_p = float(exit_plan["exit"])
+            stop_p = float(candidate["planned_stop"])
+            if candidate["direction"] == "long":
+                risk = max(entry_p - stop_p, 0.01)
+                r_multiple = (exit_p - entry_p) / risk
+            else:
+                risk = max(stop_p - entry_p, 0.01)
+                r_multiple = (entry_p - exit_p) / risk
+
             trades.append({**candidate, **exit_plan, "r_multiple": round(r_multiple, 2)})
 
     trades_df = pd.DataFrame(trades)

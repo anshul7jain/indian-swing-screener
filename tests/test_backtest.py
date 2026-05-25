@@ -49,3 +49,33 @@ def test_simulate_exit_uses_time_exit_when_no_level_hit() -> None:
     assert result["exit_reason"] == "time_exit"
     assert result["exit_date"] == "2024-01-03"
     assert result["exit"] == 110
+
+def test_simulate_exit_short() -> None:
+    result = _simulate_exit(
+        _history(),
+        signal_date=pd.Timestamp("2024-01-01"),
+        entry=102,
+        stop=105,
+        target=99,
+        max_holding_days=4,
+        direction="short",
+    )
+
+    assert result is not None
+    assert result["entry_date"] == "2024-01-02"
+    assert result["entry"] == 101 # next open
+    assert result["exit_reason"] == "stop"
+
+def test_simulate_exit_short_gap_stop() -> None:
+    result = _simulate_exit(
+        _history(),
+        signal_date=pd.Timestamp("2024-01-01"),
+        entry=100,
+        stop=100,
+        target=90,
+        max_holding_days=4,
+        direction="short",
+    )
+    assert result is not None
+    assert result["entry"] == 101
+    assert result["exit_reason"] == "gap_past_stop"

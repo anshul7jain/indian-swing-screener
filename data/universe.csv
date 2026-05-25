@@ -1,96 +1,180 @@
 symbol,name,sector
-RELIANCE,Reliance Industries,Energy
-ONGC,Oil and Natural Gas Corporation,Energy
-COALINDIA,Coal India,Energy
-BPCL,Bharat Petroleum,Energy
-IOC,Indian Oil Corporation,Energy
-POWERGRID,Power Grid Corporation,Utilities
-NTPC,NTPC,Utilities
-TATAPOWER,Tata Power,Utilities
-ADANIGREEN,Adani Green Energy,Utilities
-TCS,Tata Consultancy Services,Information Technology
-INFY,Infosys,Information Technology
-HCLTECH,HCL Technologies,Information Technology
-WIPRO,Wipro,Information Technology
-TECHM,Tech Mahindra,Information Technology
-LTIM,LTIMindtree,Information Technology
-PERSISTENT,Persistent Systems,Information Technology
-HDFCBANK,HDFC Bank,Financial Services
-ICICIBANK,ICICI Bank,Financial Services
-SBIN,State Bank of India,Financial Services
-KOTAKBANK,Kotak Mahindra Bank,Financial Services
-AXISBANK,Axis Bank,Financial Services
-BANKBARODA,Bank of Baroda,Financial Services
-CANBK,Canara Bank,Financial Services
-PNB,Punjab National Bank,Financial Services
-FEDERALBNK,Federal Bank,Financial Services
-IDFCFIRSTB,IDFC First Bank,Financial Services
-BAJFINANCE,Bajaj Finance,Financial Services
-BAJAJFINSV,Bajaj Finserv,Financial Services
-CHOLAFIN,Cholamandalam Investment,Financial Services
-MUTHOOTFIN,Muthoot Finance,Financial Services
-PFC,Power Finance Corporation,Financial Services
-RECLTD,REC,Financial Services
-HDFCLIFE,HDFC Life Insurance,Financial Services
-SBILIFE,SBI Life Insurance,Financial Services
-ICICIPRULI,ICICI Prudential Life,Financial Services
-ITC,ITC,Consumer Staples
-HINDUNILVR,Hindustan Unilever,Consumer Staples
-NESTLEIND,Nestle India,Consumer Staples
-BRITANNIA,Britannia Industries,Consumer Staples
-TATACONSUM,Tata Consumer Products,Consumer Staples
-DABUR,Dabur India,Consumer Staples
-MARICO,Marico,Consumer Staples
-DMART,Avenue Supermarts,Consumer Discretionary
-TRENT,Trent,Consumer Discretionary
-TITAN,Titan Company,Consumer Discretionary
-ZOMATO,Zomato,Consumer Discretionary
-NYKAA,FSN E-Commerce Ventures,Consumer Discretionary
-PAYTM,One 97 Communications,Consumer Discretionary
-IRCTC,Indian Railway Catering and Tourism,Consumer Discretionary
-INDIGO,InterGlobe Aviation,Consumer Discretionary
-MARUTI,Maruti Suzuki,Automobile
-TATAMOTORS,Tata Motors,Automobile
-M&M,Mahindra and Mahindra,Automobile
-EICHERMOT,Eicher Motors,Automobile
-HEROMOTOCO,Hero MotoCorp,Automobile
-BAJAJ-AUTO,Bajaj Auto,Automobile
-TVSMOTOR,TVS Motor,Automobile
-ASHOKLEY,Ashok Leyland,Automobile
-SUNPHARMA,Sun Pharmaceutical,Healthcare
-CIPLA,Cipla,Healthcare
-DRREDDY,Dr Reddy's Laboratories,Healthcare
-DIVISLAB,Divi's Laboratories,Healthcare
-APOLLOHOSP,Apollo Hospitals,Healthcare
-LUPIN,Lupin,Healthcare
-AUROPHARMA,Aurobindo Pharma,Healthcare
-BIOCON,Biocon,Healthcare
-TATASTEEL,Tata Steel,Metals
-JSWSTEEL,JSW Steel,Metals
-HINDALCO,Hindalco Industries,Metals
-VEDL,Vedanta,Metals
-JINDALSTEL,Jindal Steel and Power,Metals
-NATIONALUM,National Aluminium,Metals
-LT,Larsen and Toubro,Industrials
-SIEMENS,Siemens,Industrials
+AARTIIND,Aarti Industries,Materials
 ABB,ABB India,Industrials
-HAL,Hindustan Aeronautics,Industrials
-BEL,Bharat Electronics,Industrials
-BHEL,Bharat Heavy Electricals,Industrials
-RVNL,Rail Vikas Nigam,Industrials
-POLYCAB,Polycab India,Industrials
-HAVELLS,Havells India,Industrials
-ULTRACEMCO,UltraTech Cement,Materials
-GRASIM,Grasim Industries,Materials
-SHREECEM,Shree Cement,Materials
+ABBOTINDIA,Abbott India,Healthcare
+ABCAPITAL,Aditya Birla Capital,Financial Services
+ABFRL,Aditya Birla Fashion,Consumer Discretionary
+ACC,ACC,Materials
+ADANIENT,Adani Enterprises,Industrials
+ADANIPORTS,Adani Ports,Industrials
+ALKEM,Alkem Laboratories,Healthcare
 AMBUJACEM,Ambuja Cements,Materials
-PIDILITIND,Pidilite Industries,Materials
+APOLLOHOSP,Apollo Hospitals,Healthcare
+APOLLOTYRE,Apollo Tyres,Automobile
+ASHOKLEY,Ashok Leyland,Automobile
 ASIANPAINT,Asian Paints,Materials
+ASTRAL,Astral,Materials
+ATUL,Atul,Materials
+AUBANK,AU Small Finance Bank,Financial Services
+AUROPHARMA,Aurobindo Pharma,Healthcare
+AXISBANK,Axis Bank,Financial Services
+BAJAJ-AUTO,Bajaj Auto,Automobile
+BAJAJFINSV,Bajaj Finserv,Financial Services
+BAJFINANCE,Bajaj Finance,Financial Services
+BALKRISIND,Balkrishna Industries,Automobile
+BALRAMCHIN,Balrampur Chini,Consumer Staples
+BANDHANBNK,Bandhan Bank,Financial Services
+BANKBARODA,Bank of Baroda,Financial Services
+BATAINDIA,Bata India,Consumer Discretionary
+BEL,Bharat Electronics,Industrials
 BERGEPAINT,Berger Paints,Materials
-DLF,DLF,Real Estate
-GODREJPROP,Godrej Properties,Real Estate
-OBEROIRLTY,Oberoi Realty,Real Estate
-PHOENIXLTD,Phoenix Mills,Real Estate
+BHARATFORG,Bharat Forge,Industrials
 BHARTIARTL,Bharti Airtel,Telecom
+BHEL,Bharat Heavy Electricals,Industrials
+BIOCON,Biocon,Healthcare
+BOSCHLTD,Bosch,Automobile
+BPCL,Bharat Petroleum,Energy
+BRITANNIA,Britannia Industries,Consumer Staples
+BSOFT,Birlasoft,Information Technology
+CANBK,Canara Bank,Financial Services
+CANFINHOME,Can Fin Homes,Financial Services
+CHAMBLFERT,Chambal Fertilisers,Materials
+CHOLAFIN,Cholamandalam Investment,Financial Services
+CIPLA,Cipla,Healthcare
+COALINDIA,Coal India,Energy
+COFORGE,Coforge,Information Technology
+COLPAL,Colgate-Palmolive,Consumer Staples
+CONCOR,Container Corporation,Industrials
+COROMANDEL,Coromandel International,Materials
+CROMPTON,Crompton Greaves Consumer,Consumer Discretionary
+CUB,City Union Bank,Financial Services
+CUMMINSIND,Cummins India,Industrials
+DABUR,Dabur India,Consumer Staples
+DALBHARAT,Dalmia Bharat,Materials
+DEEPAKNTR,Deepak Nitrite,Materials
+DIVISLAB,Divi's Laboratories,Healthcare
+DIXON,Dixon Technologies,Consumer Discretionary
+DLF,DLF,Real Estate
+DRREDDY,Dr Reddy's Laboratories,Healthcare
+EICHERMOT,Eicher Motors,Automobile
+ESCORTS,Escorts Kubota,Automobile
+EXIDEIND,Exide Industries,Automobile
+FEDERALBNK,Federal Bank,Financial Services
+GAIL,GAIL India,Energy
+GLENMARK,Glenmark Pharmaceuticals,Healthcare
+GMRINFRA,GMR Airports,Industrials
+GNFC,Gujarat Narmada Valley,Materials
+GODREJCP,Godrej Consumer Products,Consumer Staples
+GODREJPROP,Godrej Properties,Real Estate
+GRANULES,Granules India,Healthcare
+GRASIM,Grasim Industries,Materials
+GUJGASLTD,Gujarat Gas,Utilities
+HAL,Hindustan Aeronautics,Industrials
+HAVELLS,Havells India,Industrials
+HCLTECH,HCL Technologies,Information Technology
+HDFCAMC,HDFC Asset Management,Financial Services
+HDFCBANK,HDFC Bank,Financial Services
+HDFCLIFE,HDFC Life Insurance,Financial Services
+HEROMOTOCO,Hero MotoCorp,Automobile
+HINDALCO,Hindalco Industries,Metals
+HINDCOPPER,Hindustan Copper,Metals
+HINDPETRO,Hindustan Petroleum,Energy
+HINDUNILVR,Hindustan Unilever,Consumer Staples
+ICICIBANK,ICICI Bank,Financial Services
+ICICIGI,ICICI Lombard,Financial Services
+ICICIPRULI,ICICI Prudential Life,Financial Services
+IDEA,Vodafone Idea,Telecom
+IDFCFIRSTB,IDFC First Bank,Financial Services
+IEX,Indian Energy Exchange,Financial Services
+IGL,Indraprastha Gas,Utilities
+INDHOTEL,Indian Hotels,Consumer Discretionary
+INDIACEM,India Cements,Materials
+INDIAMART,IndiaMART,Information Technology
+INDIGO,InterGlobe Aviation,Consumer Discretionary
+INDUSINDBK,IndusInd Bank,Financial Services
 INDUSTOWER,Indus Towers,Telecom
+INFY,Infosys,Information Technology
+IOC,Indian Oil Corporation,Energy
+IPCALAB,IPCA Laboratories,Healthcare
+IRCTC,IRCTC,Consumer Discretionary
+ITC,ITC,Consumer Staples
+JINDALSTEL,Jindal Steel and Power,Metals
+JKCEMENT,JK Cement,Materials
+JSWSTEEL,JSW Steel,Metals
+JUBLFOOD,Jubilant FoodWorks,Consumer Discretionary
+KOTAKBANK,Kotak Mahindra Bank,Financial Services
+LALPATHLAB,Dr. Lal PathLabs,Healthcare
+LAURUSLABS,Laurus Labs,Healthcare
+LICHSGFIN,LIC Housing Finance,Financial Services
+LT,Larsen and Toubro,Industrials
+LTIM,LTIMindtree,Information Technology
+LTTS,L&T Technology Services,Information Technology
+LUPIN,Lupin,Healthcare
+M&M,Mahindra and Mahindra,Automobile
+M&MFIN,Mahindra and Mahindra Financial,Financial Services
+MANAPPURAM,Manappuram Finance,Financial Services
+MARICO,Marico,Consumer Staples
+MARUTI,Maruti Suzuki,Automobile
+MCX,Multi Commodity Exchange,Financial Services
+METROPOLIS,Metropolis Healthcare,Healthcare
+MFSL,Max Financial Services,Financial Services
+MGL,Mahanagar Gas,Utilities
+MOTHERSON,Samvardhana Motherson,Automobile
+MPHASIS,Mphasis,Information Technology
+MRF,MRF,Automobile
+MUTHOOTFIN,Muthoot Finance,Financial Services
+NATIONALUM,National Aluminium,Metals
 NAUKRI,Info Edge,Internet
+NAVINFLUOR,Navin Fluorine,Materials
+NESTLEIND,Nestle India,Consumer Staples
+NMDC,NMDC,Metals
+NTPC,NTPC,Utilities
+OBEROIRLTY,Oberoi Realty,Real Estate
+OFSS,Oracle Financial Services,Information Technology
+ONGC,Oil and Natural Gas Corporation,Energy
+PAGEIND,Page Industries,Consumer Discretionary
+PEL,Piramal Enterprises,Financial Services
+PERSISTENT,Persistent Systems,Information Technology
+PETRONET,Petronet LNG,Energy
+PFC,Power Finance Corporation,Financial Services
+PIDILITIND,Pidilite Industries,Materials
+PIIND,PI Industries,Materials
+PNB,Punjab National Bank,Financial Services
+POLYCAB,Polycab India,Industrials
+POWERGRID,Power Grid Corporation,Utilities
+PVRINOX,PVR INOX,Consumer Discretionary
+RAMCOCEM,Ramco Cements,Materials
+RBLBANK,RBL Bank,Financial Services
+RECLTD,REC,Financial Services
+RELIANCE,Reliance Industries,Energy
+SAIL,Steel Authority of India,Metals
+SBICARD,SBI Cards,Financial Services
+SBILIFE,SBI Life Insurance,Financial Services
+SBIN,State Bank of India,Financial Services
+SHREECEM,Shree Cement,Materials
+SHRIRAMFIN,Shriram Finance,Financial Services
+SIEMENS,Siemens,Industrials
+SRF,SRF,Materials
+SUNPHARMA,Sun Pharmaceutical,Healthcare
+SUNTV,Sun TV Network,Telecom
+SYNGENE,Syngene International,Healthcare
+TATACHEM,Tata Chemicals,Materials
+TATACOMM,Tata Communications,Telecom
+TATACONSUM,Tata Consumer Products,Consumer Staples
+TATAMOTORS,Tata Motors,Automobile
+TATAPOWER,Tata Power,Utilities
+TATASTEEL,Tata Steel,Metals
+TCS,Tata Consultancy Services,Information Technology
+TECHM,Tech Mahindra,Information Technology
+TITAN,Titan Company,Consumer Discretionary
+TORNTPHARM,Torrent Pharmaceuticals,Healthcare
+TRENT,Trent,Consumer Discretionary
+TVSMOTOR,TVS Motor,Automobile
+UBL,United Breweries,Consumer Staples
+ULTRACEMCO,UltraTech Cement,Materials
+UPL,UPL,Materials
+VEDL,Vedanta,Metals
+VOLTAS,Voltas,Consumer Discretionary
+WIPRO,Wipro,Information Technology
+ZEEL,Zee Entertainment,Telecom
+ZYDUSLIFE,Zydus Lifesciences,Healthcare
