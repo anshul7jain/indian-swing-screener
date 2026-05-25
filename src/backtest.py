@@ -49,13 +49,31 @@ def _fetch_history_range(yahoo_symbol: str, start: str, end: str | None = None) 
     return df
 
 
+def _fetch_nifty_trend(start: str, end: str | None = None) -> pd.Series:
+    try:
+        df = _fetch_history_range("^NSEI", start, end)
+        if df.empty:
+            return pd.Series(dtype=int)
+
+        df["sma_50"] = df["Close"].rolling(50, min_periods=50).mean()
+        trend = pd.Series(0, index=df.index)
+        trend[df["Close"] > df["sma_50"]] = 1
+        trend[df["Close"] < df["sma_50"]] = -1
+        return trend
+    except Exception:
+        return pd.Series(dtype=int)
+
+
 def _prepare_histories(
     universe: pd.DataFrame,
     config: BacktestConfig,
-) -> tuple[dict[str, pd.DataFrame], list[str]]:
+) -> tuple[dict[str, pd.DataFrame], list[str], pd.Series]:
     histories: dict[str, pd.DataFrame] = {}
     failures: list[str] = []
     sample = universe.head(config.max_symbols) if config.max_symbols else universe
+
+    dl_start = _download_start(config.start_date)
+    nifty_trend = _fetch_nifty_trend(dl_start)
 
     for stock in sample.itertuples(index=False):
         try:
@@ -73,7 +91,7 @@ def _prepare_histories(
         except Exception as exc:  # noqa: BLE001 - keep backtest resilient per symbol.
             failures.append(f"{stock.symbol}: {exc}")
 
-    return histories, failures
+    return histories, failures, nifty_trend
 
 
 def _build_daily_rows(histories: dict[str, pd.DataFrame], run_date: pd.Timestamp) -> pd.DataFrame:
@@ -209,7 +227,7 @@ def run_backtest(
     universe: pd.DataFrame,
     config: BacktestConfig,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, float], list[str]]:
-    histories, failures = _prepare_histories(universe, config)
+    histories, failures, nifty_trend = _prepare_histories(universe, config)
     if not histories:
         return pd.DataFrame(), pd.DataFrame(), {}, failures
 
@@ -224,6 +242,8 @@ def run_backtest(
         if daily_rows.empty:
             continue
 
+        market_regime = nifty_trend.get(run_date, 0)
+
         sector_scores = _sector_scores(daily_rows)
         day_signals: list[dict[str, object]] = []
         for _, row in daily_rows.iterrows():
@@ -231,6 +251,12 @@ def run_backtest(
             for signal in evaluate_strategies(row, sector_score):
                 if signal.score < config.min_score:
                     continue
+
+                if market_regime == 1 and signal.direction != "long":
+                    continue
+                if market_regime == -1 and signal.direction != "short":
+                    continue
+
                 day_signals.append(
                     {
                         "symbol": row["symbol"],
@@ -248,6 +274,11 @@ def run_backtest(
                 )
 
         for candidate in sorted(day_signals, key=lambda item: item["score"], reverse=True):
+            # Limit total active trades across all symbols to 10 at any time
+            active_trades_count = sum(1 for exit_date in active_until.values() if exit_date >= run_date)
+            if active_trades_count >= 10:
+                break
+
             symbol = str(candidate["symbol"])
             if active_until.get(symbol, pd.Timestamp.min) >= run_date:
                 continue
