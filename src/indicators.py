@@ -41,6 +41,8 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     out["high_20_prev"] = out["High"].rolling(20, min_periods=20).max().shift(1)
     out["low_10_prev"] = out["Low"].rolling(10, min_periods=10).min().shift(1)
+    out["low_20_prev"] = out["Low"].rolling(20, min_periods=20).min().shift(1)
+    out["high_10_prev"] = out["High"].rolling(10, min_periods=10).max().shift(1)
     out["high_52w"] = out["High"].rolling(252, min_periods=120).max()
     out["low_52w"] = out["Low"].rolling(252, min_periods=120).min()
 
@@ -48,6 +50,7 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["ret_3m"] = close.pct_change(63)
     out["ret_6m"] = close.pct_change(126)
     out["distance_to_52w_high"] = (close / out["high_52w"]) - 1
+    out["distance_to_52w_low"] = (close / out["low_52w"]) - 1
     out["distance_to_ema_20"] = (close / out["ema_20"]) - 1
     out["volume_ratio"] = out["Volume"] / out["volume_sma_20"]
     return out
