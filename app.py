@@ -114,7 +114,7 @@ if run_scan:
     st.cache_data.clear()
 
 with st.spinner("Scanning NSE symbols from Yahoo Finance..."):
-    signals, histories, failures = cached_screen(period, min_score, None if scan_all else int(max_symbols))
+    signals, histories, failures, market_regime = cached_screen(period, min_score, None if scan_all else int(max_symbols))
 
 if send_test_whatsapp:
     apply_streamlit_secrets_to_env()
@@ -131,6 +131,13 @@ if send_test_whatsapp:
                 st.sidebar.success(f"WhatsApp API accepted message(s): {result}")
         except Exception as exc:  # noqa: BLE001 - surface Twilio's actionable message in the app.
             st.sidebar.error(f"WhatsApp send failed: {exc}")
+
+if market_regime == 1:
+    st.info("📈 Market Regime (Nifty 50): **Uptrend** (Filtering for Long setups only)")
+elif market_regime == -1:
+    st.warning("📉 Market Regime (Nifty 50): **Downtrend** (Filtering for Short setups only)")
+else:
+    st.info("Market Regime: Neutral")
 
 if signals.empty:
     st.warning("No paper signals passed the current filters. Try lowering the score or scanning more symbols.")
@@ -210,7 +217,8 @@ st.info(
 st.divider()
 st.header("Backtest")
 st.caption(
-    "Replays the same signal rules historically. Signals are generated on close, entered at the next session open, "
+    "Replays the same signal rules historically. Only takes Long trades in uptrends and Short trades in downtrends. "
+    "Maximum 10 concurrent trades active at any time. Signals are generated on close, entered at the next session open, "
     "and exited at stop, 2R target, or max holding period."
 )
 

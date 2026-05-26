@@ -64,15 +64,33 @@ def collect_latest_rows(
     return pd.DataFrame(rows), histories, failures
 
 
+def _get_current_market_regime() -> int:
+    try:
+        import yfinance as yf
+        df = yf.download("^NSEI", period="6mo", interval="1d", auto_adjust=False, progress=False)
+        if df.empty:
+            return 0
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [col[0] for col in df.columns]
+        df["sma_50"] = df["Close"].rolling(50, min_periods=50).mean()
+        if df["sma_50"].isna().iloc[-1]:
+            return 0
+        return 1 if float(df["Close"].iloc[-1]) > float(df["sma_50"].iloc[-1]) else -1
+    except Exception:
+        return 0
+
+
 def screen_universe(
     universe: pd.DataFrame,
     period: str = "18mo",
     min_score: float = 65,
     max_symbols: int | None = None,
-) -> tuple[pd.DataFrame, dict[str, pd.DataFrame], list[str]]:
+) -> tuple[pd.DataFrame, dict[str, pd.DataFrame], list[str], int]:
     latest_rows, histories, failures = collect_latest_rows(universe, period, max_symbols)
+    market_regime = _get_current_market_regime()
+
     if latest_rows.empty:
-        return pd.DataFrame(), histories, failures
+        return pd.DataFrame(), histories, failures, market_regime
 
     sector_scores = _sector_scores(latest_rows)
     signal_rows: list[dict[str, object]] = []
@@ -82,6 +100,12 @@ def screen_universe(
         for signal in evaluate_strategies(row, sector_score):
             if signal.score < min_score:
                 continue
+
+            if market_regime == 1 and signal.direction != "long":
+                continue
+            if market_regime == -1 and signal.direction != "short":
+                continue
+
             signal_rows.append(
                 {
                     "date": row["date"],
@@ -110,11 +134,11 @@ def screen_universe(
 
     signals = pd.DataFrame(signal_rows)
     if signals.empty:
-        return signals, histories, failures
+        return signals, histories, failures, market_regime
 
     signals = signals.sort_values(
         by=["score", "sector_score", "ret_3m_pct"],
         ascending=[False, False, False],
     ).reset_index(drop=True)
-    return signals, histories, failures
+    return signals, histories, failures, market_regime
 
