@@ -10,7 +10,7 @@ import streamlit as st
 from src.backtest import BacktestConfig, run_backtest
 from src.config import APP_NAME, DEFAULT_MAX_SYMBOLS, DEFAULT_MIN_SCORE, DEFAULT_PERIOD, UNIVERSE_PATH
 from src.data import load_universe
-from src.notify_whatsapp import build_message, send_whatsapp
+from src.notify_telegram import build_message
 from src.screener import screen_universe
 
 st.set_page_config(page_title=APP_NAME, layout="wide")
@@ -73,11 +73,8 @@ def render_chart(symbol: str, history: pd.DataFrame) -> None:
 
 def apply_streamlit_secrets_to_env() -> None:
     for key in [
-        "TWILIO_ACCOUNT_SID",
-        "TWILIO_AUTH_TOKEN",
-        "TWILIO_FROM_WHATSAPP",
-        "WHATSAPP_TO_NUMBER",
-        "TWILIO_CONTENT_SID",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_CHAT_ID",
         "DASHBOARD_URL",
     ]:
         try:
@@ -89,8 +86,8 @@ def apply_streamlit_secrets_to_env() -> None:
             os.environ[key] = str(value)
 
 
-def missing_whatsapp_settings() -> list[str]:
-    required = ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_WHATSAPP", "WHATSAPP_TO_NUMBER"]
+def missing_telegram_settings() -> list[str]:
+    required = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]
     return [key for key in required if not os.getenv(key)]
 
 
@@ -107,8 +104,8 @@ with st.sidebar:
     st.divider()
     st.caption("Edit data/universe.csv to add/remove NSE symbols.")
     st.divider()
-    st.header("WhatsApp")
-    send_test_whatsapp = st.button("Send test WhatsApp", width="stretch")
+    st.header("Telegram")
+    send_test_telegram = st.button("Send test Telegram", width="stretch")
 
 if run_scan:
     st.cache_data.clear()
@@ -116,21 +113,29 @@ if run_scan:
 with st.spinner("Scanning NSE symbols from Yahoo Finance..."):
     signals, histories, failures, market_regime = cached_screen(period, min_score, None if scan_all else int(max_symbols))
 
-if send_test_whatsapp:
+if send_test_telegram:
     apply_streamlit_secrets_to_env()
-    missing = missing_whatsapp_settings()
+    missing = missing_telegram_settings()
     if missing:
-        st.sidebar.error(f"Missing WhatsApp settings: {', '.join(missing)}")
+        st.sidebar.error(f"Missing Telegram settings: {', '.join(missing)}")
     else:
         message = build_message(signals, dashboard_url=os.getenv("DASHBOARD_URL", ""))
         try:
-            result = send_whatsapp(message)
+            from src.notify_telegram import send_telegram
+            result = send_telegram(message)
             if result == "dry-run":
-                st.sidebar.warning("WhatsApp ran in dry-run mode. Check secrets and NOTIFY_DRY_RUN.")
+                st.sidebar.warning("Telegram ran in dry-run mode. Check secrets and NOTIFY_DRY_RUN.")
             else:
-                st.sidebar.success(f"WhatsApp API accepted message(s): {result}")
-        except Exception as exc:  # noqa: BLE001 - surface Twilio's actionable message in the app.
-            st.sidebar.error(f"WhatsApp send failed: {exc}")
+                st.sidebar.success(f"Telegram API accepted message(s): {result}")
+        except Exception as exc:  # noqa: BLE001 - surface error in the app.
+            st.sidebar.error(f"Telegram send failed: {exc}")
+
+if market_regime == 1:
+    st.info("📈 Market Regime (Nifty 50): **Uptrend** (Filtering for Long setups only)")
+elif market_regime == -1:
+    st.warning("📉 Market Regime (Nifty 50): **Downtrend** (Filtering for Short setups only)")
+else:
+    st.info("Market Regime: Neutral")
 
 if market_regime == 1:
     st.info("📈 Market Regime (Nifty 50): **Uptrend** (Filtering for Long setups only)")

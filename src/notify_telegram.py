@@ -72,61 +72,54 @@ def mask_recipient(recipient: str) -> str:
     return f"{recipient[:10]}...{recipient[-4:]}"
 
 
-def send_whatsapp(message: str) -> str:
+def send_telegram(message: str) -> str:
     dry_run = os.getenv("NOTIFY_DRY_RUN", "false").lower() == "true"
-    require_config = os.getenv("REQUIRE_WHATSAPP_CONFIG", "false").lower() == "true"
-    sid = os.getenv("TWILIO_ACCOUNT_SID")
-    token = os.getenv("TWILIO_AUTH_TOKEN")
-    from_number = os.getenv("TWILIO_FROM_WHATSAPP")
-    to_numbers = parse_recipients(os.getenv("WHATSAPP_TO_NUMBER"))
-    content_sid = os.getenv("TWILIO_CONTENT_SID")
+    require_config = os.getenv("REQUIRE_TELEGRAM_CONFIG", "false").lower() == "true"
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_ids = parse_recipients(os.getenv("TELEGRAM_CHAT_ID"))
+
     missing = [
         name
         for name, value in {
-            "TWILIO_ACCOUNT_SID": sid,
-            "TWILIO_AUTH_TOKEN": token,
-            "TWILIO_FROM_WHATSAPP": from_number,
-            "WHATSAPP_TO_NUMBER": ",".join(to_numbers),
+            "TELEGRAM_BOT_TOKEN": bot_token,
+            "TELEGRAM_CHAT_ID": ",".join(chat_ids),
         }.items()
         if not value
     ]
 
     if dry_run:
-        print(f"WhatsApp dry run for {len(to_numbers)} recipient(s): {[mask_recipient(n) for n in to_numbers]}")
+        print(f"Telegram dry run for {len(chat_ids)} recipient(s): {[mask_recipient(n) for n in chat_ids]}")
         print(message)
         return "dry-run"
 
     if missing:
         if require_config:
-            raise RuntimeError(f"Missing WhatsApp environment variables: {', '.join(missing)}")
-        print(f"WhatsApp config missing ({', '.join(missing)}); falling back to dry-run.")
+            raise RuntimeError(f"Missing Telegram environment variables: {', '.join(missing)}")
+        print(f"Telegram config missing ({', '.join(missing)}); falling back to dry-run.")
         print(message)
         return "dry-run"
 
-    from twilio.rest import Client
+    import requests
 
-    client = Client(sid, token)
     sent_ids = []
     failures = []
-    print(f"Sending WhatsApp message to {len(to_numbers)} recipient(s): {[mask_recipient(n) for n in to_numbers]}")
-    for to_number in to_numbers:
+    print(f"Sending Telegram message to {len(chat_ids)} recipient(s): {[mask_recipient(n) for n in chat_ids]}")
+    for chat_id in chat_ids:
         try:
-            if content_sid:
-                sent = client.messages.create(
-                    from_=from_number,
-                    to=to_number,
-                    content_sid=content_sid,
-                    content_variables=json.dumps({"1": message[:1500]}),
-                )
-            else:
-                sent = client.messages.create(from_=from_number, to=to_number, body=message)
-            print(f"Sent to {mask_recipient(to_number)} with SID {sent.sid}")
-            sent_ids.append(sent.sid)
+            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            payload = {
+                "chat_id": chat_id,
+                "text": message
+            }
+            response = requests.post(url, json=payload, timeout=10)
+            response.raise_for_status()
+            print(f"Sent to {mask_recipient(chat_id)} successfully.")
+            sent_ids.append(str(chat_id))
         except Exception as exc:  # noqa: BLE001 - keep all recipient failures visible.
-            failures.append(f"{mask_recipient(to_number)}: {exc}")
+            failures.append(f"{mask_recipient(chat_id)}: {exc}")
 
     if failures:
-        raise RuntimeError("WhatsApp send failed for recipient(s): " + " | ".join(failures))
+        raise RuntimeError("Telegram send failed for recipient(s): " + " | ".join(failures))
     return ",".join(sent_ids)
 
 
@@ -135,7 +128,7 @@ def main() -> None:
     enforce_send_window = os.getenv("ENFORCE_SEND_WINDOW", "false").lower() == "true"
     if enforce_send_window and not inside_send_window():
         now = _now_ist().strftime("%d %b %Y %H:%M %Z")
-        print(f"Skipping scheduled WhatsApp send outside 07:30-08:45 IST window. Current time: {now}")
+        print(f"Skipping scheduled Telegram send outside 07:30-08:45 IST window. Current time: {now}")
         return
 
     min_score = float(os.getenv("SCREENER_MIN_SCORE", DEFAULT_MIN_SCORE))
@@ -144,13 +137,13 @@ def main() -> None:
     dashboard_url = os.getenv("DASHBOARD_URL", "").strip()
 
     universe = load_universe(UNIVERSE_PATH)
-    signals, _, failures = screen_universe(universe, min_score=min_score, max_symbols=max_symbols)
+    signals, _, failures, market_regime = screen_universe(universe, min_score=min_score, max_symbols=max_symbols)
     if failures:
         print(f"Skipped {len(failures)} symbols. First few: {failures[:5]}")
 
     message = build_message(signals, dashboard_url=dashboard_url)
-    result = send_whatsapp(message)
-    print(f"WhatsApp notification result: {result}")
+    result = send_telegram(message)
+    print(f"Telegram notification result: {result}")
 
 
 if __name__ == "__main__":
