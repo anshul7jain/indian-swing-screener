@@ -1,4 +1,4 @@
-name: Morning WhatsApp Signals
+name: Morning Telegram Signals
 
 on:
   schedule:
@@ -23,17 +23,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Send WhatsApp paper signals
+      - name: Send Telegram paper signals
         env:
-          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
-          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
-          TWILIO_FROM_WHATSAPP: ${{ secrets.TWILIO_FROM_WHATSAPP }}
-          WHATSAPP_TO_NUMBER: ${{ secrets.WHATSAPP_TO_NUMBER }}
-          TWILIO_CONTENT_SID: ${{ secrets.TWILIO_CONTENT_SID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
           SCREENER_MIN_SCORE: ${{ vars.SCREENER_MIN_SCORE || '65' }}
           SCREENER_MAX_SYMBOLS: ${{ vars.SCREENER_MAX_SYMBOLS || '' }}
           NOTIFY_DRY_RUN: "false"
-          REQUIRE_WHATSAPP_CONFIG: "true"
+          REQUIRE_TELEGRAM_CONFIG: "true"
           ENFORCE_SEND_WINDOW: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
-        run: python -m src.notify_whatsapp
+        run: python -m src.notify_telegram

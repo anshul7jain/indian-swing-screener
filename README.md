@@ -45,48 +45,44 @@ The dashboard does not need WhatsApp secrets unless you also want to reuse the r
 
 ## WhatsApp Setup
 
-The app supports two WhatsApp paths:
+The app supports two Telegram notification paths:
 
-- A **Send test WhatsApp** button inside the Streamlit dashboard.
+- A **Send test Telegram** button inside the Streamlit dashboard.
 - An automatic **8 AM IST** weekday notification through GitHub Actions.
 
-Both use Twilio WhatsApp.
+Both use the Telegram HTTP API.
 
-### 1. Create Twilio WhatsApp Sandbox
+### 1. Create a Telegram Bot
 
-1. Create or open a Twilio account.
-2. Go to Twilio Console -> Messaging -> Try it out -> Send a WhatsApp message.
-3. Open the WhatsApp Sandbox instructions.
-4. Join the sandbox from your phone by scanning the QR code or sending the displayed `join ...` message to Twilio's sandbox WhatsApp number.
-5. Copy your Account SID and Auth Token from Twilio Console.
-
-For sandbox testing, your phone must join the sandbox first. For production, use an approved WhatsApp sender/template as required by WhatsApp/Twilio.
+1. Open Telegram and search for `@BotFather`.
+2. Send the `/newbot` command and follow the instructions to create your bot.
+3. Once created, BotFather will give you a **Bot Token**. Save this token.
+4. Start a conversation with your new bot and send it a message (e.g., "/start").
+5. Find your `chat_id`. You can do this by forwarding a message from yourself to `@userinfobot` or by hitting `https://api.telegram.org/bot<YourBotToken>/getUpdates` in your browser.
 
 ### 2. Add Streamlit Secrets For Manual App Test
 
 In Streamlit Cloud, open the app settings and add these secrets:
 
 ```toml
-TWILIO_ACCOUNT_SID = "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-TWILIO_AUTH_TOKEN = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-TWILIO_FROM_WHATSAPP = "whatsapp:+14155238886"
-WHATSAPP_TO_NUMBER = "whatsapp:+91XXXXXXXXXX"
+TELEGRAM_BOT_TOKEN = "your_bot_token_here"
+TELEGRAM_CHAT_ID = "your_chat_id_here"
 DASHBOARD_URL = "https://your-app-name.streamlit.app"
 ```
 
-For multiple recipients, put all numbers in `WHATSAPP_TO_NUMBER`, separated by commas:
+For multiple recipients, put all chat IDs in `TELEGRAM_CHAT_ID`, separated by commas:
 
 ```toml
-WHATSAPP_TO_NUMBER = "whatsapp:+91XXXXXXXXXX,whatsapp:+91YYYYYYYYYY,whatsapp:+91ZZZZZZZZZZ"
+TELEGRAM_CHAT_ID = "12345678,87654321"
 ```
 
-Then redeploy/reboot the app and click **Send test WhatsApp** in the sidebar.
+Then redeploy/reboot the app and click **Send test Telegram** in the sidebar.
 
 ### 3. Add GitHub Secrets For 8 AM Notification
 
 Streamlit Cloud is not a reliable cron runner, so the repo includes a GitHub Actions workflow:
 
-`.github/workflows/morning_whatsapp.yml`
+`.github/workflows/morning_telegram.yml`
 
 It runs at **02:30 UTC / 08:00 IST**, Monday to Friday.
 
@@ -94,30 +90,16 @@ Because GitHub scheduled workflows are best-effort and may drift, the workflow a
 
 Create these GitHub repository secrets:
 
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_FROM_WHATSAPP`, for example `whatsapp:+14155238886` for Twilio sandbox
-- `WHATSAPP_TO_NUMBER`, for example `whatsapp:+91XXXXXXXXXX,whatsapp:+91YYYYYYYYYY`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
 - `DASHBOARD_URL`, your Streamlit app URL
-- `TWILIO_CONTENT_SID`, optional for production template messages
 
 Optional repository variables:
 
 - `SCREENER_MIN_SCORE`, default `65`
 - `SCREENER_MAX_SYMBOLS`, blank means full universe
 
-To test immediately, go to GitHub -> Actions -> Morning WhatsApp Signals -> Run workflow.
-
-### Production Template Note
-
-For a real production WhatsApp sender, Meta/Twilio may require an approved template for business-initiated morning messages. Create a Twilio Content Template such as:
-
-```text
-Daily swing screener update:
-{{1}}
-```
-
-After approval, add its Content SID as `TWILIO_CONTENT_SID`. If `TWILIO_CONTENT_SID` is blank, the app sends a normal text body, which is best for sandbox testing.
+To test immediately, go to GitHub -> Actions -> Morning Telegram Signals -> Run workflow.
 
 ## Signal Notes
 
