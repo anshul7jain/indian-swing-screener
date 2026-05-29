@@ -55,15 +55,10 @@ def _fetch_nifty_trend(start: str, end: str | None = None) -> pd.Series:
         if df.empty:
             return pd.Series(dtype=int)
 
-        df["sma_20"] = df["Close"].rolling(20, min_periods=20).mean()
         df["sma_50"] = df["Close"].rolling(50, min_periods=50).mean()
         trend = pd.Series(0, index=df.index)
-
-        uptrend = (df["Close"] > df["sma_20"]) & (df["sma_20"] > df["sma_50"])
-        downtrend = (df["Close"] < df["sma_20"]) & (df["sma_20"] < df["sma_50"])
-
-        trend[uptrend] = 1
-        trend[downtrend] = -1
+        trend[df["Close"] > df["sma_50"]] = 1
+        trend[df["Close"] < df["sma_50"]] = -1
         return trend
     except Exception:
         return pd.Series(dtype=int)
@@ -201,7 +196,7 @@ def _simulate_exit(
         else:
             continue
 
-        return_pct = ((exit_price - entry) / entry) * 100 if direction == "long" else ((entry - exit_price) / entry) * 100
+        return_pct = ((exit_price / entry) - 1) * 100 if direction == "long" else ((entry / exit_price) - 1) * 100
 
         return {
             "entry_date": entry_date.date().isoformat(),
@@ -215,7 +210,7 @@ def _simulate_exit(
 
     last_day = future.index[-1]
     last_close = float(future.iloc[-1]["Close"])
-    return_pct = ((last_close - entry) / entry) * 100 if direction == "long" else ((entry - last_close) / entry) * 100
+    return_pct = ((last_close / entry) - 1) * 100 if direction == "long" else ((entry / last_close) - 1) * 100
 
     return {
         "entry_date": entry_date.date().isoformat(),

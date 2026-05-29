@@ -39,6 +39,12 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["atr_14"] = atr(out, 14)
     out["volume_sma_20"] = out["Volume"].rolling(20, min_periods=20).mean()
 
+    # Bollinger Bands (20, 2)
+    std_20 = close.rolling(20, min_periods=20).std()
+    out["bb_mid"] = close.rolling(20, min_periods=20).mean()
+    out["bb_upper"] = out["bb_mid"] + (2 * std_20)
+    out["bb_lower"] = out["bb_mid"] - (2 * std_20)
+
     out["high_20_prev"] = out["High"].rolling(20, min_periods=20).max().shift(1)
     out["low_10_prev"] = out["Low"].rolling(10, min_periods=10).min().shift(1)
     out["low_20_prev"] = out["Low"].rolling(20, min_periods=20).min().shift(1)

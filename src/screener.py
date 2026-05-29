@@ -72,22 +72,10 @@ def _get_current_market_regime() -> int:
             return 0
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = [col[0] for col in df.columns]
-
-        df["sma_20"] = df["Close"].rolling(20, min_periods=20).mean()
         df["sma_50"] = df["Close"].rolling(50, min_periods=50).mean()
-
-        if df["sma_50"].isna().iloc[-1] or df["sma_20"].isna().iloc[-1]:
+        if df["sma_50"].isna().iloc[-1]:
             return 0
-
-        close = float(df["Close"].iloc[-1])
-        sma_20 = float(df["sma_20"].iloc[-1])
-        sma_50 = float(df["sma_50"].iloc[-1])
-
-        if close > sma_20 and sma_20 > sma_50:
-            return 1
-        elif close < sma_20 and sma_20 < sma_50:
-            return -1
-        return 0
+        return 1 if float(df["Close"].iloc[-1]) > float(df["sma_50"].iloc[-1]) else -1
     except Exception:
         return 0
 
