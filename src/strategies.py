@@ -31,21 +31,23 @@ def _safe_float(value: object, default: float = math.nan) -> float:
 def _risk_plan(close: float, atr: float, swing_extreme: float, direction: str = "long") -> tuple[float, float, float, float, float]:
     entry = close
 
+    # Using 2.0x ATR and 2.5 R Reward based on optimization tests
     if direction == "long":
-        atr_stop = close - (2.5 * atr)
+        atr_stop = close - (2.0 * atr)
         swing_stop = swing_extreme if not math.isnan(swing_extreme) else atr_stop
-        # Don't restrict the stop too tightly to allow trades to breathe
+        # min() between swing and atr gives the lowest (widest) price. max() caps it at a 15% drawdown limit.
         stop = max(min(atr_stop, swing_stop), close * 0.85)
         risk = max(entry - stop, 0.01)
-        target = entry + (2 * risk)
+        target = entry + (2.5 * risk)
         risk_pct = (risk / entry) * 100
         reward_risk = (target - entry) / risk
     else:
-        atr_stop = close + (2.5 * atr)
+        atr_stop = close + (2.0 * atr)
         swing_stop = swing_extreme if not math.isnan(swing_extreme) else atr_stop
+        # max() between swing and atr gives the highest (widest) price. min() caps it at a 15% drawdown limit.
         stop = min(max(atr_stop, swing_stop), close * 1.15)
         risk = max(stop - entry, 0.01)
-        target = entry - (2 * risk)
+        target = entry - (2.5 * risk)
         risk_pct = (risk / entry) * 100
         reward_risk = (entry - target) / risk
 
@@ -54,6 +56,7 @@ def _risk_plan(close: float, atr: float, swing_extreme: float, direction: str = 
 
 def breakout_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal | None:
     close = _safe_float(row.get("Close"))
+    open_price = _safe_float(row.get("Open"))
     sma_50 = _safe_float(row.get("sma_50"))
     sma_200 = _safe_float(row.get("sma_200"))
     rsi = _safe_float(row.get("rsi_14"))
@@ -73,28 +76,32 @@ def breakout_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal 
     breakout_ok = close > high_20 if not math.isnan(high_20) else near_high
     rsi_ok = 50 <= rsi <= 76
     strength_ok = ret_3m > 0 and ret_6m > 0
+    # Stricter requirement for volume on breakout
+    volume_ok = volume_ratio >= 1.5
+    # Must be a green closing candle
+    momentum_ok = close > open_price if not math.isnan(open_price) else True
 
     score = 0
     score += 25 if trend_ok else 0
     score += 20 if near_high else max(0, 20 + (dist_high * 200))
     score += 15 if breakout_ok else 0
-    score += 10 if volume_ratio >= 1.2 else min(10, max(0, volume_ratio * 6))
+    score += 10 if volume_ok else min(10, max(0, volume_ratio * 6))
     score += 15 if rsi_ok else max(0, 15 - abs(rsi - 62) * 0.8)
     score += 10 if strength_ok else max(0, ret_3m * 40)
     score += min(5, max(0, sector_score / 20))
 
-    if score < 55 or not trend_ok:
+    if score < 60 or not trend_ok or not volume_ok or not momentum_ok:
         return None
 
     entry, stop, target, risk_pct, reward_risk = _risk_plan(close, atr, low_10, "long")
-    signal = "Breakout watch" if score < 75 else "Paper buy watch"
+    signal = "Breakout watch" if score < 80 else "Paper buy watch"
     reasons = []
     if near_high:
         reasons.append("near 52w high")
     if breakout_ok:
         reasons.append("20d breakout")
-    if volume_ratio >= 1.2:
-        reasons.append("volume expansion")
+    if volume_ok:
+        reasons.append("strong volume expansion")
     if sector_score >= 60:
         reasons.append("strong sector")
 
@@ -114,6 +121,7 @@ def breakout_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal 
 
 def breakdown_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal | None:
     close = _safe_float(row.get("Close"))
+    open_price = _safe_float(row.get("Open"))
     sma_50 = _safe_float(row.get("sma_50"))
     sma_200 = _safe_float(row.get("sma_200"))
     rsi = _safe_float(row.get("rsi_14"))
@@ -133,28 +141,32 @@ def breakdown_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal
     breakdown_ok = close < low_20 if not math.isnan(low_20) else near_low
     rsi_ok = 24 <= rsi <= 50
     weakness_ok = ret_3m < 0 and ret_6m < 0
+    # Stricter requirement for volume
+    volume_ok = volume_ratio >= 1.5
+    # Must be a red closing candle
+    momentum_ok = close < open_price if not math.isnan(open_price) else True
 
     score = 0
     score += 25 if trend_ok else 0
     score += 20 if near_low else max(0, 20 - (dist_low * 200))
     score += 15 if breakdown_ok else 0
-    score += 10 if volume_ratio >= 1.2 else min(10, max(0, volume_ratio * 6))
+    score += 10 if volume_ok else min(10, max(0, volume_ratio * 6))
     score += 15 if rsi_ok else max(0, 15 - abs(rsi - 38) * 0.8)
     score += 10 if weakness_ok else max(0, -ret_3m * 40)
     score += min(5, max(0, (100 - sector_score) / 20))
 
-    if score < 55 or not trend_ok:
+    if score < 60 or not trend_ok or not volume_ok or not momentum_ok:
         return None
 
     entry, stop, target, risk_pct, reward_risk = _risk_plan(close, atr, high_10, "short")
-    signal = "Breakdown watch" if score < 75 else "Paper short watch"
+    signal = "Breakdown watch" if score < 80 else "Paper short watch"
     reasons = []
     if near_low:
         reasons.append("near 52w low")
     if breakdown_ok:
         reasons.append("20d breakdown")
-    if volume_ratio >= 1.2:
-        reasons.append("volume expansion")
+    if volume_ok:
+        reasons.append("strong volume expansion")
     if sector_score <= 40:
         reasons.append("weak sector")
 
@@ -174,6 +186,7 @@ def breakdown_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal
 
 def pullback_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal | None:
     close = _safe_float(row.get("Close"))
+    open_price = _safe_float(row.get("Open"))
     low = _safe_float(row.get("Low"))
     prev_close = _safe_float(row.get("Close_prev"))
     sma_50 = _safe_float(row.get("sma_50"))
@@ -190,30 +203,35 @@ def pullback_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal 
         return None
 
     trend_ok = close > sma_50 > sma_200
-    touched_ema = low <= ema_20 * 1.02 or abs(dist_ema) <= 0.035
-    bounce_ok = math.isnan(prev_close) or close > prev_close
+    touched_ema = low <= ema_20 * 1.01 or abs(dist_ema) <= 0.035
+    # Strict bounce confirmation: close higher than previous close AND higher than current open
+    bounce_ok = False
+    if not math.isnan(prev_close) and not math.isnan(open_price):
+        bounce_ok = close > prev_close and close > open_price
+
     not_too_extended = dist_high < -0.02
-    rsi_ok = 45 <= rsi <= 68
+    # Ensure RSI cooled down appropriately
+    rsi_ok = 40 <= rsi <= 55
 
     score = 0
     score += 30 if trend_ok else 0
     score += 20 if touched_ema else max(0, 20 - abs(dist_ema) * 300)
     score += 15 if bounce_ok else 0
-    score += 15 if rsi_ok else max(0, 15 - abs(rsi - 56) * 0.8)
+    score += 15 if rsi_ok else max(0, 15 - abs(rsi - 50) * 0.8)
     score += 10 if ret_3m > 0 else max(0, ret_3m * 50)
     score += 5 if not_too_extended else 0
     score += min(5, max(0, sector_score / 20))
 
-    if score < 55 or not trend_ok or not touched_ema:
+    if score < 60 or not trend_ok or not touched_ema or not bounce_ok:
         return None
 
     entry, stop, target, risk_pct, reward_risk = _risk_plan(close, atr, low_10, "long")
-    signal = "Pullback watch" if score < 75 else "Paper buy watch"
+    signal = "Pullback watch" if score < 80 else "Paper buy watch"
     reasons = ["uptrend pullback"]
     if touched_ema:
         reasons.append("near 20 EMA")
     if bounce_ok:
-        reasons.append("bounce candle")
+        reasons.append("confirmed bounce candle")
     if sector_score >= 60:
         reasons.append("strong sector")
 
@@ -233,6 +251,7 @@ def pullback_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal 
 
 def short_pullback_signal(row: pd.Series, sector_score: float = 50) -> StrategySignal | None:
     close = _safe_float(row.get("Close"))
+    open_price = _safe_float(row.get("Open"))
     high = _safe_float(row.get("High"))
     prev_close = _safe_float(row.get("Close_prev"))
     sma_50 = _safe_float(row.get("sma_50"))
@@ -249,30 +268,34 @@ def short_pullback_signal(row: pd.Series, sector_score: float = 50) -> StrategyS
         return None
 
     trend_ok = close < sma_50 < sma_200
-    touched_ema = high >= ema_20 * 0.98 or abs(dist_ema) <= 0.035
-    bounce_ok = math.isnan(prev_close) or close < prev_close
+    touched_ema = high >= ema_20 * 0.99 or abs(dist_ema) <= 0.035
+    # Strict bounce confirmation: close lower than previous close AND lower than current open
+    bounce_ok = False
+    if not math.isnan(prev_close) and not math.isnan(open_price):
+        bounce_ok = close < prev_close and close < open_price
+
     not_too_extended = dist_low > 0.02
-    rsi_ok = 32 <= rsi <= 55
+    rsi_ok = 45 <= rsi <= 60
 
     score = 0
     score += 30 if trend_ok else 0
     score += 20 if touched_ema else max(0, 20 - abs(dist_ema) * 300)
     score += 15 if bounce_ok else 0
-    score += 15 if rsi_ok else max(0, 15 - abs(rsi - 44) * 0.8)
+    score += 15 if rsi_ok else max(0, 15 - abs(rsi - 50) * 0.8)
     score += 10 if ret_3m < 0 else max(0, -ret_3m * 50)
     score += 5 if not_too_extended else 0
     score += min(5, max(0, (100 - sector_score) / 20))
 
-    if score < 55 or not trend_ok or not touched_ema:
+    if score < 60 or not trend_ok or not touched_ema or not bounce_ok:
         return None
 
     entry, stop, target, risk_pct, reward_risk = _risk_plan(close, atr, high_10, "short")
-    signal = "Short pullback watch" if score < 75 else "Paper short watch"
+    signal = "Short pullback watch" if score < 80 else "Paper short watch"
     reasons = ["downtrend pullback"]
     if touched_ema:
         reasons.append("near 20 EMA")
     if bounce_ok:
-        reasons.append("rejection candle")
+        reasons.append("confirmed rejection candle")
     if sector_score <= 40:
         reasons.append("weak sector")
 
